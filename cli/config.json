@@ -1,0 +1,50 @@
+﻿{
+  "pip_cache": {
+    "paths": ["%LOCALAPPDATA%\\pip\\cache"],
+    "size_hint": "~9GB",
+    "risk": "safe",
+    "desc": "Python package download cache. Regenerates on demand.",
+    "clean_cmd": "pip cache purge"
+  },
+  "npm_cache": {
+    "paths": ["%LOCALAPPDATA%\\npm-cache"],
+    "size_hint": "~3GB",
+    "risk": "safe",
+    "desc": "Node.js package cache. Regenerates on demand.",
+    "clean_cmd": "npm cache clean --force"
+  },
+  "nvidia_shader": {
+    "paths": ["%USERPROFILE%\\.cache\\DXCache"],
+    "size_hint": "~7GB",
+    "risk": "safe",
+    "desc": "NVIDIA shader compilation cache. Regenerates when games launch.",
+    "clean_cmd": "del /f /s /q \"%USERPROFILE%\\.cache\\DXCache\\*.*\""
+  },
+  "windows_temp": {
+    "paths": ["%TEMP%"],
+    "size_hint": "~2GB",
+    "risk": "safe",
+    "desc": "User temporary files. Safe to delete, OS recreates as needed."
+  },
+  "windows_update": {
+    "paths": ["%windir%\\SoftwareDistribution\\Download"],
+    "size_hint": "~3GB",
+    "risk": "low",
+    "desc": "Windows Update download cache. Needs admin rights. Safe to delete.",
+    "admin_required": true
+  },
+  "wechat_cache": {
+    "paths": ["%APPDATA%\\Tencent", "%USERPROFILE%\\Documents\\xwechat_files"],
+    "size_hint": "~11GB",
+    "risk": "medium",
+    "desc": "WeChat chat cache and file transfers. May lose chat history.",
+    "in_app_clean": true
+  },
+  "marvis_service": {
+    "paths": ["D:\\Program Files\\Tencent\\Marvis"],
+    "size_hint": "~1GB",
+    "risk": "high",
+    "desc": "Tencent Marvis background service. 10 processes, 695 threads.",
+    "clean_cmd": "sc stop MarvisSvr & sc config MarvisSvr start=disabled"
+  }
+}
