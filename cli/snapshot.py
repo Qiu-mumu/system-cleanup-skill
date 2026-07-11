@@ -1,4 +1,4 @@
-"""snapshot.py -- Save current system state for before/after comparison."""
+﻿"""snapshot.py -- Save current system state for before/after comparison."""
 import json, os
 from .cleanup import load_config, scan
 from .diagnose import gpu, disk
@@ -6,6 +6,7 @@ from .diagnose import gpu, disk
 SNAPSHOT_FILE = os.path.expanduser("~/.system-cleanup-snapshot.json")
 
 def take_snapshot():
+    try:
     config = load_config(); results = scan(config)
     gi = gpu(); di = disk()
     total = round(sum(r["size_mb"] for r in results)/1024, 1)
@@ -20,5 +21,8 @@ def load_snapshot():
     try:
         with open(SNAPSHOT_FILE,"r",encoding="utf-8") as fh: return json.load(fh)
     except: return None
+
+    except Exception as e:
+        print('Snapshot failed: ' + str(e))
 
 def main(): take_snapshot()
