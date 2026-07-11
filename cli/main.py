@@ -16,6 +16,9 @@ def main():
     sys.argv = [sys.argv[0]] + sys.argv[2:]
     if cmd == "diagnose":
         diagnose.main()
+    elif cmd == "snapshot":
+        from .snapshot import main as snp
+        snp()
     elif cmd == "report":
         from .report import main as rpt
         rpt()

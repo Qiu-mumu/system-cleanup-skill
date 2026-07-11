@@ -2,12 +2,15 @@
 import json, os, subprocess, sys
 from .cleanup import load_config, scan
 from .diagnose import gpu, disk
+from .snapshot import load_snapshot
 
 TEMPLATE = r"""<!DOCTYPE html>
 <html lang="zh-CN">
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>System Cleanup Report</title>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4">function setLang(l){document.documentElement.lang=l;document.querySelectorAll('.lang-toggle a').forEach(function(a){a.className=a.id=='btn-'+l?'active':''});}
+(function(){var l=navigator.language||"";setLang(l.startsWith("zh")?"zh":"en");})();
+</script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:-apple-system,"Segoe UI",Roboto,sans-serif;background:#0f1117;color:#e4e6eb;padding:24px}
@@ -32,25 +35,38 @@ tr:hover td{background:#1f2233}
 .tag-h{background:#3a1a3a;color:#e879f9}
 .footer{text-align:center;color:#525668;font-size:12px;margin-top:20px}
 @media(max-width:700px){.cards{grid-template-columns:repeat(2,1fr)}}
+.lang-toggle{text-align:right;margin-bottom:12px;font-size:13px}
+.lang-toggle a{cursor:pointer;color:#60a5fa;text-decoration:none;margin:0 6px}
+.lang-toggle a.active{color:#e4e6eb;font-weight:700}
+[lang="zh"] .en{display:none}
+[lang="en"] .zh{display:none}
+.comp-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;text-align:center;margin-top:12px}
+.delta{font-size:13px;margin-top:4px}
+.delta .up{color:#4ade80} .delta .down{color:#f87171}
 </style></head>
 <body>
 
-<h1>System Cleanup Report</h1>
+<div class="lang-toggle">
+  <a class="active" onclick="setLang('zh')" id="btn-zh">中文</a>
+  <a onclick="setLang('en')" id="btn-en">English</a>
+</div>
+<h1><span class="zh">系统清理报告</span><span class="en">System Cleanup Report</span></h1>
 <div class="sub">Generated: TIMESTAMP_PLACEHOLDER</div>
 
 <div class="cards">
-  <div class="card c1"><div class="l">Recoverable</div><div class="v">TOTAL_GB_PLACEHOLDER GB</div><div class="sub" style="color:#525668;font-size:11px">TOTAL_ITEMS_PLACEHOLDER items found</div></div>
-  <div class="card c2"><div class="l">Safe to Clean</div><div class="v">SAFE_COUNT_PLACEHOLDER</div><div class="sub" style="color:#525668;font-size:11px">SAFE_GB_PLACEHOLDER GB</div></div>
-  <div class="card c3"><div class="l">Needs Review</div><div class="v">MEDIUM_COUNT_PLACEHOLDER</div><div class="sub" style="color:#525668;font-size:11px">MEDIUM_GB_PLACEHOLDER GB</div></div>
-  <div class="card c4"><div class="l">Disk C:</div><div class="v">DISK_FREE_PLACEHOLDER GB</div><div class="sub" style="color:#525668;font-size:11px">DISK_PCT_PLACEHOLDER% used</div></div>
+  <div class="card c1"><div class="l"><span class="zh">可回收</span><span class="en">Recoverable</div><div class="v">TOTAL_GB_PLACEHOLDER GB</div><div class="sub" style="color:#525668;font-size:11px">TOTAL_ITEMS_PLACEHOLDER items found</div></div>
+  <div class="card c2"><div class="l"><span class="zh">安全清理</span><span class="en">Safe to Clean</div><div class="v">SAFE_COUNT_PLACEHOLDER</div><div class="sub" style="color:#525668;font-size:11px">SAFE_GB_PLACEHOLDER GB</div></div>
+  <div class="card c3"><div class="l"><span class="zh">待复核</span><span class="en">Needs Review</div><div class="v">MEDIUM_COUNT_PLACEHOLDER</div><div class="sub" style="color:#525668;font-size:11px">MEDIUM_GB_PLACEHOLDER GB</div></div>
+  <div class="card c4"><div class="l"><span class="zh">C盘</span><span class="en">Disk C:</div><div class="v">DISK_FREE_PLACEHOLDER GB</div><div class="sub" style="color:#525668;font-size:11px">DISK_PCT_PLACEHOLDER% used</div></div>
 </div>
 
+SNAPSHOT_HTML_PLACEHOLDER
 GPU_STATUS_PLACEHOLDER
 
 <div class="chart-box"><h3>Top Junk by Size (GB)</h3><canvas id="chart"></canvas></div>
 
-<div class="chart-box" style="overflow-x:auto"><h3>All Items</h3>
-<table><thead><tr><th>Category</th><th>Path</th><th>Size</th><th>Risk</th><th>Status</th></tr></thead>
+<div class="chart-box" style="overflow-x:auto"><h3><span class="zh">全部项目</span><span class="en">All Items</h3>
+<table><thead><tr><th><span class="zh">分类</span><span class="en">Category</th><th><span class="zh">路径</span><span class="en">Path</th><th><span class="zh">大小</span><span class="en">Size</th><th><span class="zh">风险</span><span class="en">Risk</th><th><span class="zh">状态</span><span class="en">Status</th></tr></thead>
 <tbody>TABLE_ROWS_PLACEHOLDER</tbody></table></div>
 
 <div class="footer">
@@ -88,6 +104,8 @@ new Chart(document.getElementById('chart'), {
     }
   }
 });
+function setLang(l){document.documentElement.lang=l;document.querySelectorAll('.lang-toggle a').forEach(function(a){a.className=a.id=='btn-'+l?'active':''});}
+(function(){var l=navigator.language||"";setLang(l.startsWith("zh")?"zh":"en");})();
 </script>
 </body></html>
 """
@@ -120,6 +138,39 @@ def generate_report(output="system-cleanup-report.html"):
             disk_pct = str(d["pct"])
 
     # GPU status
+    # Snapshot comparison
+    snap_html = ""
+    snap = load_snapshot()
+    if snap:
+        pc = snap.get("disk_C_free")
+        pj = snap.get("junk_total_gb")
+        pg = snap.get("gpu_temp")
+        st = snap.get("timestamp","?")
+        cells = []
+        if pc is not None and isinstance(disk_free, (int, float)):
+            d = disk_free - pc
+            cl = "up" if d>0 else ("down" if d<0 else "same")
+            cells.append('<div><span class="zh">C盘</span><span class="en">C Drive</span>:<br>'
+                + str(round(pc,1)) + 'GB -> ' + str(round(disk_free,1)) + 'GB<br>'
+                + '<span class="delta"><span class="' + cl + '">' + ('+' if d>0 else '') + str(round(d,1)) + 'GB</span></span></div>')
+        if pj is not None and isinstance(total_gb, (int, float)):
+            d = total_gb - pj
+            cl = "down" if d<0 else ("up" if d>0 else "same")
+            cells.append('<div><span class="zh">垃圾</span><span class="en">Junk</span>:<br>'
+                + str(pj) + 'GB -> ' + str(total_gb) + 'GB<br>'
+                + '<span class="delta"><span class="' + cl + '">' + ('+' if d>0 else '') + str(round(d,1)) + 'GB</span></span></div>')
+        if pg is not None and "temp" in gpu_info:
+            d = gpu_info["temp"] - pg
+            cl = "down" if d<0 else ("up" if d>0 else "same")
+            cells.append('<div><span class="zh">显卡</span><span class="en">GPU</span>:<br>'
+                + str(pg) + 'C -> ' + str(gpu_info["temp"]) + 'C<br>'
+                + '<span class="delta"><span class="' + cl + '">' + ('+' if d>0 else '') + str(d) + 'C</span></span></div>')
+        if cells:
+            joined = "".join(cells)
+            snap_html = ("<div class=\"chart-box\" style=\"margin-bottom:20px\"><h3>"
+                + '<span class="zh">快照对比</span><span class="en">Since Snapshot</span> (' + st + ')'
+                + "</h3><div class=\"comp-grid\">" + joined + "</div></div>")
+
     gpu_html = ""
     if "temp" in gpu_info:
         flag = "!!! HOT" if gpu_info["temp"] > 60 else ""
