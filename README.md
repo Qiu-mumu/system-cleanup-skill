@@ -1,68 +1,76 @@
 ﻿# First-Principles System Cleanup
 
-A universal system cleanup framework built on first principles.
-Works with: **Codex**, **Claude Code**, **ChatGPT**, **Cursor**, or standalone CLI.
+A universal system cleanup framework built on first principles.  
+Works standalone (`pip install`) or integrated with **Codex**, **Claude Code**, **ChatGPT**, **Cursor**.
 
-Not a "boost your PC" tool — a structured diagnostic framework that traces every deletion to its physical-layer consequences.
+Two commands. Zero guesswork.
 
-## What's Included
-
-```
-system-cleanup-skill/
-├── SKILL.md                     # Codex skill (3 modes + 4 safety mechanisms)
-│
-├── cli/
-│   ├── diagnose.py              # Standalone diagnosis tool (read-only, safe)
-│   └── config.json              # Junk path database (software -> cache location -> risk)
-│
-├── docs/
-│   └── first-principles-guide.md # Universal guide (any human or AI can follow)
-│
-├── integrations/
-│   └── CLAUDE.md                 # Claude Desktop / Claude Code config
-│
-├── CleanUp.bat                   # Reference implementation (ASCII safe)
-├── examples/
-│   └── fan-noise-diagnosis.md    # Real-case walkthrough
-├── README.md
-├── LICENSE
-└── .gitignore
+```bash
+scl diagnose    # read-only system diagnosis (disk, GPU, processes, symlinks)
+scl scan        # scan junk paths, show what can be safely cleaned
+scl clean       # execute safe cleanup (file-lock + symlink + service-rebirth protected)
+scl clean --full   # include admin-required operations
+scl clean --dry-run # preview without touching anything
 ```
 
 ## Quick Start
 
 ```bash
-# Diagnose your system (read-only)
-python cli/diagnose.py
-
-# With JSON output (for AI parsing)
-python cli/diagnose.py --json
+pip install system-cleanup
+scl diagnose     # see what's happening
+scl scan         # see what can be cleaned
+scl clean        # clean it safely
 ```
 
-## Core Principles
+Or clone and run directly:
 
-1. **Resource Limits**: Disk, RAM, CPU, thermal headroom — all finite.
-2. **Action-Consequence Chain**: Every deletion has a downstream effect.
-3. **Reversibility**: Every P1+ operation must have a documented undo path.
-4. **Precision**: Distinguish OS binaries (never touch) from system caches (safe).
+```bash
+git clone https://github.com/Qiu-mumu/system-cleanup-skill.git
+cd system-cleanup-skill
+python -m cli.main diagnose
+python -m cli.main clean --dry-run
+python -m cli.main clean
+```
 
 ## Safety Mechanisms
 
 | Mechanism | What it prevents |
 |-----------|-----------------|
-| File Lock Detection | Deleting files in use by running processes |
-| Symlink Detection | Deleting real data on another drive by mistake |
-| Service Rebirth Detection | Repeated kill/restart cycles that spike CPU |
-| Absolute Fuses | Never-touch list: OS component store, signed binaries, page files |
+| **File Lock Detection** | Deleting files in use by running processes |
+| **Symlink Detection** | Deleting real data on another drive by mistake |
+| **Service Rebirth Detection** | Repeated kill/restart cycles that spike CPU |
+| **Absolute Fuses** | Never-touch: WinSxS, signed System32 binaries, page files |
+| **Reversibility** | Save original state before disabling services or deleting >1GB |
 
-## Usage with Different AI Tools
+## What Gets Checked Before Every Clean
 
-| Platform | File | How to use |
-|----------|------|-----------|
-| Codex | `SKILL.md` | Place in `~/.codex/skills/system-cleanup/SKILL.md` |
-| Claude Code / Claude Desktop | `integrations/CLAUDE.md` | Add to project root as `CLAUDE.md` |
-| ChatGPT | `docs/first-principles-guide.md` | Copy-paste as Custom Instructions |
-| Cursor | `docs/first-principles-guide.md` | Add to `.cursorrules` |
+| Risk | Items |
+|------|-------|
+| 🔒 Safe (auto) | pip cache, npm cache, NVIDIA shader cache, Temp, Recycle Bin |
+| ⚠️ Low risk | Windows Update cache, Chrome/Edge cache, VS Code cache, Docker cache |
+| ⚡ Medium risk | WeChat cache (may lose chat history), Git objects (use gc instead) |
+| 🔴 Absolute Fuse | WinSxS, assembly, pagefile.sys, signed System32 binaries |
+
+## Contents
+
+```
+system-cleanup-skill/
+├── cli/
+│   ├── __init__.py
+│   ├── diagnose.py          # read-only diagnosis
+│   ├── cleanup.py           # safety-checked cleanup executor
+│   ├── main.py              # CLI entry point
+│   └── config.json          # 18 junk path entries with risk levels
+├── docs/
+│   └── first-principles-guide.md
+├── integrations/
+│   └── CLAUDE.md
+├── SKILL.md                 # Codex skill (3 modes + 4 safety mechanisms)
+├── setup.py                 # pip install
+├── CleanUp.bat
+├── LICENSE
+└── .gitignore
+```
 
 ## License
 

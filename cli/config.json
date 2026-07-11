@@ -1,50 +1,99 @@
 ﻿{
   "pip_cache": {
     "paths": ["%LOCALAPPDATA%\\pip\\cache"],
-    "size_hint": "~9GB",
-    "risk": "safe",
+    "size_hint": "~9GB", "risk": "safe",
     "desc": "Python package download cache. Regenerates on demand.",
     "clean_cmd": "pip cache purge"
   },
   "npm_cache": {
     "paths": ["%LOCALAPPDATA%\\npm-cache"],
-    "size_hint": "~3GB",
-    "risk": "safe",
+    "size_hint": "~3GB", "risk": "safe",
     "desc": "Node.js package cache. Regenerates on demand.",
     "clean_cmd": "npm cache clean --force"
   },
   "nvidia_shader": {
-    "paths": ["%USERPROFILE%\\.cache\\DXCache"],
-    "size_hint": "~7GB",
-    "risk": "safe",
+    "paths": ["%USERPROFILE%\\.cache\\DXCache", "%LOCALAPPDATA%\\NVIDIA\\DXCache"],
+    "size_hint": "~7GB", "risk": "safe",
     "desc": "NVIDIA shader compilation cache. Regenerates when games launch.",
-    "clean_cmd": "del /f /s /q \"%USERPROFILE%\\.cache\\DXCache\\*.*\""
+    "clean_cmd": "del /f /s /q \"%USERPROFILE%\\.cache\\DXCache\\*.*\" 2>nul & del /f /s /q \"%LOCALAPPDATA%\\NVIDIA\\DXCache\\*.*\" 2>nul"
   },
   "windows_temp": {
     "paths": ["%TEMP%"],
-    "size_hint": "~2GB",
-    "risk": "safe",
-    "desc": "User temporary files. Safe to delete, OS recreates as needed."
+    "size_hint": "~2GB", "risk": "safe",
+    "desc": "User temporary files. Safe to delete.",
+    "clean_cmd": "del /f /s /q \"%TEMP%\\*.*\" 2>nul"
   },
-  "windows_update": {
+  "recycle_bin": {
+    "paths": ["C:\\$Recycle.Bin"],
+    "size_hint": "~2GB", "risk": "safe",
+    "desc": "Recycle Bin. Safe to empty.",
+    "clean_cmd": "powershell -Command Clear-RecycleBin -Force 2>nul"
+  },
+  "windows_update_cache": {
     "paths": ["%windir%\\SoftwareDistribution\\Download"],
-    "size_hint": "~3GB",
-    "risk": "low",
-    "desc": "Windows Update download cache. Needs admin rights. Safe to delete.",
-    "admin_required": true
+    "size_hint": "~3GB", "risk": "low",
+    "desc": "Windows Update download cache. Needs admin.",
+    "admin_required": true,
+    "clean_cmd": "net stop wuauserv 2>nul & net stop bits 2>nul & del /f /s /q \"%windir%\\SoftwareDistribution\\Download\\*.*\" 2>nul & net start wuauserv 2>nul & net start bits 2>nul"
+  },
+  "prefetch": {
+    "paths": ["%windir%\\Prefetch"],
+    "size_hint": "~500MB", "risk": "low",
+    "desc": "Windows prefetch files. Safe to clear, may slow boot slightly.",
+    "admin_required": true,
+    "clean_cmd": "del /f /s /q \"%windir%\\Prefetch\\*.*\" 2>nul"
+  },
+  "chrome_cache": {
+    "paths": ["%LOCALAPPDATA%\\Google\\Chrome\\User Data\\Default\\Cache",
+              "%LOCALAPPDATA%\\Google\\Chrome\\User Data\\Default\\Code Cache",
+              "%LOCALAPPDATA%\\Google\\Chrome\\User Data\\Default\\Service Worker\\CacheStorage"],
+    "size_hint": "~2GB", "risk": "low",
+    "desc": "Chrome browser cache. May sign out of some sites.",
+    "clean_cmd": "del /f /s /q \"%LOCALAPPDATA%\\Google\\Chrome\\User Data\\Default\\Cache\\*.*\" 2>nul & del /f /s /q \"%LOCALAPPDATA%\\Google\\Chrome\\User Data\\Default\\Code Cache\\*.*\" 2>nul"
+  },
+  "edge_cache": {
+    "paths": ["%LOCALAPPDATA%\\Microsoft\\Edge\\User Data\\Default\\Cache",
+              "%LOCALAPPDATA%\\Microsoft\\Edge\\User Data\\Default\\Code Cache"],
+    "size_hint": "~1GB", "risk": "low",
+    "desc": "Edge browser cache.",
+    "clean_cmd": "del /f /s /q \"%LOCALAPPDATA%\\Microsoft\\Edge\\User Data\\Default\\Cache\\*.*\" 2>nul"
+  },
+  "vscode_cache": {
+    "paths": ["%APPDATA%\\Code\\Cache", "%APPDATA%\\Code\\CachedData",
+              "%APPDATA%\\Code\\CachedExtensions"],
+    "size_hint": "~1GB", "risk": "low",
+    "desc": "VS Code editor cache. Safe to delete, extensions reload.",
+    "clean_cmd": "del /f /s /q \"%APPDATA%\\Code\\Cache\\*.*\" 2>nul & del /f /s /q \"%APPDATA%\\Code\\CachedData\\*.*\" 2>nul"
+  },
+  "cursor_cache": {
+    "paths": ["%APPDATA%\\Cursor\\Cache", "%APPDATA%\\Cursor\\CachedData",
+              "%APPDATA%\\Cursor\\CachedExtensions"],
+    "size_hint": "~500MB", "risk": "low",
+    "desc": "Cursor IDE cache.",
+    "clean_cmd": "del /f /s /q \"%APPDATA%\\Cursor\\Cache\\*.*\" 2>nul"
   },
   "wechat_cache": {
     "paths": ["%APPDATA%\\Tencent", "%USERPROFILE%\\Documents\\xwechat_files"],
-    "size_hint": "~11GB",
-    "risk": "medium",
+    "size_hint": "~11GB", "risk": "medium",
     "desc": "WeChat chat cache and file transfers. May lose chat history.",
-    "in_app_clean": true
+    "clean_cmd": "del /f /s /q \"%APPDATA%\\Tencent\\*.*\" 2>nul & del /f /s /q \"%USERPROFILE%\\Documents\\xwechat_files\\*.*\" 2>nul"
   },
-  "marvis_service": {
-    "paths": ["D:\\Program Files\\Tencent\\Marvis"],
-    "size_hint": "~1GB",
-    "risk": "high",
-    "desc": "Tencent Marvis background service. 10 processes, 695 threads.",
-    "clean_cmd": "sc stop MarvisSvr & sc config MarvisSvr start=disabled"
+  "steam_shader": {
+    "paths": ["D:\\SteamLibrary\\steamapps\\shadercache"],
+    "size_hint": "~5GB", "risk": "safe",
+    "desc": "Steam shader pre-cache. Regenerates when games launch.",
+    "clean_cmd": "del /f /s /q \"D:\\SteamLibrary\\steamapps\\shadercache\\*.*\" 2>nul"
+  },
+  "docker_cache": {
+    "paths": ["%USERPROFILE%\\.docker"],
+    "size_hint": "~1GB", "risk": "low",
+    "desc": "Docker config and build cache.",
+    "clean_cmd": "del /f /s /q \"%USERPROFILE%\\.docker\\*.*\" 2>nul"
+  },
+  "git_objects": {
+    "paths": [],
+    "size_hint": "~10-50GB", "risk": "medium",
+    "desc": "Git repository objects. Run 'git gc --aggressive' instead of deleting.",
+    "clean_cmd": "echo Use: git gc --aggressive"
   }
 }
