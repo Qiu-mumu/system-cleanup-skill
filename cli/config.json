@@ -1,4 +1,4 @@
-﻿{
+{
   "pip_cache": {
     "paths": ["%LOCALAPPDATA%\\pip\\cache"],
     "size_hint": "~9GB", "risk": "safe",

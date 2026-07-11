@@ -57,7 +57,7 @@ def estimate_size(path):
     return total
 
 def load_config():
-    with open(CONFIG, "r", encoding="utf-8") as f:
+    with open(CONFIG, "r", encoding="utf-8-sig") as f:
         return json.load(f)
 
 def scan(config):

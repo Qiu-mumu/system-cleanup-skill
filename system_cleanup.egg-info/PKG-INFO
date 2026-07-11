@@ -1,0 +1,100 @@
+Metadata-Version: 2.4
+Name: system-cleanup
+Version: 0.2.0
+Summary: First-principles system cleanup: diagnose + safe clean with file lock, symlink, and service-rebirth protection
+Home-page: https://github.com/Qiu-mumu/system-cleanup-skill
+Author: system-cleanup contributors
+Classifier: Development Status :: 4 - Beta
+Classifier: Environment :: Console
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: Microsoft :: Windows
+Classifier: Topic :: System :: Systems Administration
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Dynamic: author
+Dynamic: classifier
+Dynamic: description
+Dynamic: description-content-type
+Dynamic: home-page
+Dynamic: license-file
+Dynamic: requires-python
+Dynamic: summary
+
+﻿# First-Principles System Cleanup
+
+A universal system cleanup framework built on first principles.  
+Works standalone (`pip install`) or integrated with **Codex**, **Claude Code**, **ChatGPT**, **Cursor**.
+
+Two commands. Zero guesswork.
+
+```bash
+scl diagnose    # read-only system diagnosis (disk, GPU, processes, symlinks)
+scl scan        # scan junk paths, show what can be safely cleaned
+scl clean       # execute safe cleanup (file-lock + symlink + service-rebirth protected)
+scl clean --full   # include admin-required operations
+scl clean --dry-run # preview without touching anything
+```
+
+## Quick Start
+
+```bash
+pip install system-cleanup
+scl diagnose     # see what's happening
+scl scan         # see what can be cleaned
+scl clean        # clean it safely
+```
+
+Or clone and run directly:
+
+```bash
+git clone https://github.com/Qiu-mumu/system-cleanup-skill.git
+cd system-cleanup-skill
+python -m cli.main diagnose
+python -m cli.main clean --dry-run
+python -m cli.main clean
+```
+
+## Safety Mechanisms
+
+| Mechanism | What it prevents |
+|-----------|-----------------|
+| **File Lock Detection** | Deleting files in use by running processes |
+| **Symlink Detection** | Deleting real data on another drive by mistake |
+| **Service Rebirth Detection** | Repeated kill/restart cycles that spike CPU |
+| **Absolute Fuses** | Never-touch: WinSxS, signed System32 binaries, page files |
+| **Reversibility** | Save original state before disabling services or deleting >1GB |
+
+## What Gets Checked Before Every Clean
+
+| Risk | Items |
+|------|-------|
+| 🔒 Safe (auto) | pip cache, npm cache, NVIDIA shader cache, Temp, Recycle Bin |
+| ⚠️ Low risk | Windows Update cache, Chrome/Edge cache, VS Code cache, Docker cache |
+| ⚡ Medium risk | WeChat cache (may lose chat history), Git objects (use gc instead) |
+| 🔴 Absolute Fuse | WinSxS, assembly, pagefile.sys, signed System32 binaries |
+
+## Contents
+
+```
+system-cleanup-skill/
+├── cli/
+│   ├── __init__.py
+│   ├── diagnose.py          # read-only diagnosis
+│   ├── cleanup.py           # safety-checked cleanup executor
+│   ├── main.py              # CLI entry point
+│   └── config.json          # 18 junk path entries with risk levels
+├── docs/
+│   └── first-principles-guide.md
+├── integrations/
+│   └── CLAUDE.md
+├── SKILL.md                 # Codex skill (3 modes + 4 safety mechanisms)
+├── setup.py                 # pip install
+├── CleanUp.bat
+├── LICENSE
+└── .gitignore
+```
+
+## License
+
+MIT
