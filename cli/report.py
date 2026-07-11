@@ -60,7 +60,8 @@ tr:hover td{background:#1f2233}
   <div class="card c4"><div class="l"><span class="zh">C盘</span><span class="en">Disk C:</div><div class="v">DISK_FREE_PLACEHOLDER GB</div><div class="sub" style="color:#525668;font-size:11px">DISK_PCT_PLACEHOLDER% used</div></div>
 </div>
 
-SNAPSHOT_HTML_PLACEHOLDER
+ZZZ_SNAPSHOT_MARKER_ZZZ
+ZZZ_SNAPSHOT_MARKER_ZZZ
 GPU_STATUS_PLACEHOLDER
 
 <div class="chart-box"><h3>Top Junk by Size (GB)</h3><canvas id="chart"></canvas></div>
@@ -140,37 +141,35 @@ def generate_report(output="system-cleanup-report.html"):
     # GPU status
     # Snapshot comparison
     snap_html = ""
-    snap = load_snapshot()
-    if snap:
-        pc = snap.get("disk_C_free")
-        pj = snap.get("junk_total_gb")
-        pg = snap.get("gpu_temp")
-        st = snap.get("timestamp","?")
-        cells = []
-        if pc is not None and isinstance(disk_free, (int, float)):
-            d = disk_free - pc
-            cl = "up" if d>0 else ("down" if d<0 else "same")
-            cells.append('<div><span class="zh">C盘</span><span class="en">C Drive</span>:<br>'
-                + str(round(pc,1)) + 'GB -> ' + str(round(disk_free,1)) + 'GB<br>'
-                + '<span class="delta"><span class="' + cl + '">' + ('+' if d>0 else '') + str(round(d,1)) + 'GB</span></span></div>')
-        if pj is not None and isinstance(total_gb, (int, float)):
-            d = total_gb - pj
-            cl = "down" if d<0 else ("up" if d>0 else "same")
-            cells.append('<div><span class="zh">垃圾</span><span class="en">Junk</span>:<br>'
-                + str(pj) + 'GB -> ' + str(total_gb) + 'GB<br>'
-                + '<span class="delta"><span class="' + cl + '">' + ('+' if d>0 else '') + str(round(d,1)) + 'GB</span></span></div>')
-        if pg is not None and "temp" in gpu_info:
-            d = gpu_info["temp"] - pg
-            cl = "down" if d<0 else ("up" if d>0 else "same")
-            cells.append('<div><span class="zh">显卡</span><span class="en">GPU</span>:<br>'
-                + str(pg) + 'C -> ' + str(gpu_info["temp"]) + 'C<br>'
-                + '<span class="delta"><span class="' + cl + '">' + ('+' if d>0 else '') + str(d) + 'C</span></span></div>')
-        if cells:
-            joined = "".join(cells)
-            snap_html = ("<div class=\"chart-box\" style=\"margin-bottom:20px\"><h3>"
-                + '<span class="zh">快照对比</span><span class="en">Since Snapshot</span> (' + st + ')'
-                + "</h3><div class=\"comp-grid\">" + joined + "</div></div>")
-
+    try:
+        import json
+        sf = os.path.expanduser("~/.system-cleanup-snapshot.json")
+        if os.path.exists(sf):
+            with open(sf, "r") as fh:
+                snap = json.load(fh)
+            pc = snap.get("disk_C_free")
+            pj = snap.get("junk_total_gb")
+            pg = snap.get("gpu_temp")
+            st = snap.get("timestamp","?")
+            cells = []
+            if pc is not None and isinstance(disk_free, (int, float)):
+                d = disk_free - pc
+                cl = "up" if d>0 else ("down" if d<0 else "same")
+                cells.append(f"<div><span class=\"zh\">C盘</span><span class=\"en\">C Drive</span>:<br>{pc}GB -> {disk_free}GB<br><span class=\"delta\"><span class=\"{cl}\">{d:+.1f}GB</span></span></div>")
+            if pj is not None:
+                d = total_gb - pj
+                cl = "up" if d>0 else ("down" if d<0 else "same")
+                cells.append(f"<div><span class=\"zh\">垃圾</span><span class=\"en\">Junk</span>:<br>{pj}GB -> {total_gb}GB<br><span class=\"delta\"><span class=\"{cl}\">{d:+.1f}GB</span></span></div>")
+            if pg is not None and "temp" in gpu_info:
+                d = gpu_info["temp"] - pg
+                cl = "up" if d>0 else ("down" if d<0 else "same")
+                cells.append(f"<div><span class=\"zh\">显卡</span><span class=\"en\">GPU</span>:<br>{pg}C -> {gpu_info["temp"]}C<br><span class=\"delta\"><span class=\"{cl}\">{d:+d}C</span></span></div>")
+            if cells:
+                joined = "".join(cells)
+                snap_html = f"<div class=\"chart-box\" style=\"margin-bottom:20px\"><h3><span class=\"zh\">快照对比</span><span class=\"en\">Since Snapshot</span> ({st})</h3><div class=\"comp-grid\">{joined}</div></div>"
+    except:
+        pass
+    
     gpu_html = ""
     if "temp" in gpu_info:
         flag = "!!! HOT" if gpu_info["temp"] > 60 else ""
