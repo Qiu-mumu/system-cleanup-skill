@@ -83,3 +83,31 @@ P2 — Space recovery (WeChat cache, Desktop clutter)
 P3 — Convenience (wallpaper optimization, monitoring setup)
 
 Stop when P0+P1 are resolved and P2 returns <20min.
+
+## Practical Traps
+
+### Cross-Drive Move = Copy + Delete
+Moving files from C: to D: with Move-Item is actually a COPY then DELETE.
+- 11GB takes ~20-60s on SSD
+- Data exists on BOTH drives temporarily — check D: free space first
+- For moves >50GB: use obocopy C:\src D:\dst /E /MOVE /R:2 /W:5
+
+### sc config Syntax (Space Trap)
+The sc.exe command REQUIRES a space after =:
+`atch
+REM CORRECT:
+sc config ServiceName start= disabled
+
+REM WRONG (fails silently):
+sc config ServiceName start=disabled
+`
+Without the space, sc.exe treats start=disabled as a single unknown token and does nothing.
+
+### Reversibility: Save Original State First
+Before any P1+ operation, save the original:
+- Service start type: sc qc ServiceName | findstr START_TYPE
+- Power plan GUID: powercfg /getactivescheme
+- Large directory location: note original path before moving
+- System Restore Point: Checkpoint-Computer -Description "Before cleanup"
+
+This gives you a guaranteed undo path.

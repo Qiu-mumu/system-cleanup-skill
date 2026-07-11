@@ -40,3 +40,19 @@ Wrong order causes service rebirth (thrashing).
 All .bat files must be ASCII or UTF-8 without BOM.
 UTF-16LE files cause cmd.exe flash-close.
 Use: [System.IO.File]::WriteAllText(path, content, [Text.Encoding]::ASCII)
+
+## Symlink Detection
+Symlinks redirect deletion to the real path on another drive. Never follow blindly.
+
+Detection (Windows):
+- Check: `fsutil reparsepoint query <path>`
+- List all: `dir /aL` (shows directories with reparse points)
+- In Python: `os.path.islink()` or `os.path.isjunction()`
+
+Rule: If a path contains a reparse point, show the real physical target.
+Never delete a symlink target without user confirmation — it deletes the real data on the other drive.
+
+## Symbolic Links / Junctions
+- Modern software (Docker, WeChat, Steam) redirects data via symlinks to other drives
+- Deleting a symlink = deleting REAL files on the TARGET drive
+- Always verify with `fsutil reparsepoint query` before including in a delete list
